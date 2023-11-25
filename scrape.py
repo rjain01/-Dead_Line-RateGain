@@ -10,51 +10,65 @@ Links = []
 Likes =[]
 
 def scrape_page(url):
-    # Make a GET request to the specified URL
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
-    response = requests.get(url, headers=headers)
+    try:
+        # Make a GET request to the specified URL
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
+        try:
+            response = requests.get(url, headers=headers)
+        except:
+            print("Unable to fetch page with url:",url)
+            return
 
-    if response.status_code == 200:
-        # Parse the HTML content of the page
-        soup = BeautifulSoup(response.text, 'html.parser')
+        if response.status_code == 200:
+            # Parse the HTML content of the page
+            soup = BeautifulSoup(response.text, 'html.parser')
 
-        # Find all article elements with the specified class
-        articles = soup.find_all('article', class_='blog-item')
+            # Find all article elements with the specified class
+            articles = soup.find_all('article', class_='blog-item')
 
-        for article in articles:
-            # Extract title
-            title = article.find('h6').text.strip()
+            for article in articles:
+                # Extract title
+                title = article.find('h6').text.strip()
 
-            # Extract likes
-            likes_element = article.find('a', class_='zilla-likes')
-            likes = likes_element.text.split()[0] if likes_element else '0'
+                # Extract likes
+                likes_element = article.find('a', class_='zilla-likes')
+                likes = likes_element.text.split()[0] if likes_element else '0'
 
-            # Check if the article has an image
-            has_image_class = 'with-image' in article.get('class', [])
+                # Check if the article has an image
+                has_image_class = 'with-image' in article.get('class', [])
 
-            # Extract image link
-            image_link = article.find('a', class_='rocket-lazyload')['data-bg'] if has_image_class else 'N/A'
+                # Extract image link
+                image_link = article.find('a', class_='rocket-lazyload')['data-bg'] if has_image_class else 'N/A'
 
-            # Extract date
-            date_element = article.find('div', class_='bd-item').find('span')
-            date = date_element.text if date_element else 'N/A'
-            # print(title)
-            # print(likes)
-            # print(image_link)
-            # print(date)
-            Titles.append(title)
-            Links.append(image_link)
-            Date.append(date)
-            Likes.append(likes)
+                # Extract date
+                date_element = article.find('div', class_='bd-item').find('span')
+                date = date_element.text if date_element else 'N/A'
+                
+                # Adding info in lists
+                Titles.append(title)
+                Links.append(image_link)
+                Date.append(date)
+                Likes.append(likes)
 
-    else:
-        print(f"Failed to retrieve the page. Status code: {response.status_code}")
+        else:
+            print(f"Failed to retrieve the page. Status code: {response.status_code}")
+
+    except Exception as ex:
+        print("Unable to scarpe page with url:",url)
+
+
 
 def scrape_last_page_number(url):
     # Make a GET request to the specified URL
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
-    response = requests.get(url, headers=headers)
+    try:
+        response = requests.get(url, headers=headers)
+    except:
+        print("Unable to fetch page with url:",url)
+        return
+
+
 
     # Check if the request was successful (status code 200)
     if response.status_code == 200:
@@ -97,8 +111,10 @@ if __name__ == "__main__":
         print(f"Scraping page {page_num}...")
         scrape_page(url)
 
+
+
     # Create a Pandas dataframe from the data
-    df = pd.DataFrame({'Title': Titles, 'Date': Date, 'Likes': Likes, 'Links': Links})
+    df = pd.DataFrame({'Title': Titles, 'Date': Date, 'Likes': Likes, 'ImageLinks': Links})
 
     # Save the dataframe to a CSV file
     output_file_path = os.path.join(output_path, 'blog.csv')
